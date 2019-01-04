@@ -23,12 +23,6 @@ class MusicPlayer extends StatefulWidget {
   /// The URL of the audio file to play.
   final String url;
 
-  /// The title of the song being currently played.
-  final Widget title;
-
-  /// Additional text to display underneath the [title], i.e. an album title.
-  final Widget subtitle;
-
   /// Passed to [AudioPlayer].
   final bool isLocal;
 
@@ -58,6 +52,8 @@ class MusicPlayer extends StatefulWidget {
   /// Called when [shuffle] changes.
   final Function(bool) onShuffleChanged;
 
+  final Function(bool) onPlaying;
+
   /// The minimum amount of time allowed to pass before pressing the `skip_previous` button will
   /// restart the current song, rather than skipping back to a previous one.
   ///
@@ -74,15 +70,14 @@ class MusicPlayer extends StatefulWidget {
       @required this.onLoopChanged,
       @required this.onShuffleChanged,
       @required this.url,
-      @required this.title,
-      @required this.subtitle,
       this.minRestartDuration: const Duration(seconds: 3),
       this.textColor,
       this.isLocal: false,
       this.volume: 1.0,
       this.key,
       this.shuffle: false,
-      this.loop});
+      this.loop,
+      this.onPlaying});
 
   @override
   State<StatefulWidget> createState() {
@@ -92,7 +87,7 @@ class MusicPlayer extends StatefulWidget {
 
 class MusicPlayerState extends State<MusicPlayer> {
   AudioPlayer audioPlayer;
-  bool isPlaying = true;
+  bool isPlaying = false;
   Duration duration, position;
   double value;
 
@@ -185,12 +180,6 @@ class MusicPlayerState extends State<MusicPlayer> {
 
   List<Widget> _hud(BuildContext context) {
     return [
-      widget.title,
-      const Divider(
-        color: Colors.transparent,
-        height: 8.0,
-      ),
-      widget.subtitle,
       const Divider(color: Colors.transparent),
       const Divider(
         color: Colors.transparent,
@@ -238,8 +227,10 @@ class MusicPlayerState extends State<MusicPlayer> {
                     volume: widget.volume,
                   );
                 }
-
-                setState(() => isPlaying = !isPlaying);
+                setState(() {
+                  isPlaying = !isPlaying;
+                  widget.onPlaying(isPlaying);
+                });
               },
               padding: const EdgeInsets.all(0.0),
               icon: new Icon(
