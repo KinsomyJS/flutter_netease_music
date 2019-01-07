@@ -6,11 +6,11 @@ import 'package:flutter_netease_music/player_page.dart';
 
 void main() => runApp(new MyApp());
 
-final GlobalKey<MusicPlayerState> musicPlayerKey = new GlobalKey();
+final GlobalKey<PlayerState> musicPlayerKey = new GlobalKey();
 
 const String coverArt =
-        'https://images.rapgenius.com/4xo4vvlzcnbsluagktti85tf1.1000x1000x1.jpg',
-    mp3Url = 'https://ia801000.us.archive.org/22/items/MagnaCarta/13.Bbc.mp3';
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEKU9rkbdInt9fPTlJMjT_gbwlyBqbE60zELhHy_A2yMsJkBmDTw',
+    mp3Url = 'http://music.163.com/song/media/outer/url?id=451703096.mp3';
 
 class MyApp extends StatelessWidget {
   @override
@@ -33,15 +33,12 @@ class MusicPlayerExample extends StatefulWidget {
 
 class _MusicPlayerExampleState extends State<MusicPlayerExample>
     with TickerProviderStateMixin {
-  MusicPlayerLoopKind loopKind;
-  bool shuffle = false;
   AnimationController controller_record;
   Animation<double> animation_record;
   Animation<double> animation_needle;
   AnimationController controller_needle;
   final _rotateTween = new Tween<double>(begin: -0.15, end: 0.0);
   final _commonTween = new Tween<double>(begin: 0.0, end: 1.0);
-  bool _playing = false;
 
   @override
   void initState() {
@@ -88,11 +85,10 @@ class _MusicPlayerExampleState extends State<MusicPlayerExample>
                 child: new BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           child: Opacity(
-            opacity: 0.1,
+            opacity: 0.6,
             child: new Container(
               decoration: new BoxDecoration(
-//                  color: Colors.grey.shade200.withOpacity(0.5),
-                color: Colors.grey.shade100,
+                color: Colors.grey.shade900,
               ),
             ),
           ),
@@ -103,18 +99,11 @@ class _MusicPlayerExampleState extends State<MusicPlayerExample>
             automaticallyImplyLeading: false,
             backgroundColor: Colors.transparent,
             elevation: 0.0,
-            title: new Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const Text(
-                  'NOW PLAYING',
-                  textScaleFactor: 0.60,
-                ),
-                const Text(
-                  'JAY Z - Holy Grail',
-                  textScaleFactor: 0.75,
-                ),
-              ],
+            title: Container(
+              child: Text(
+                'Shape of You - Ed Sheeran',
+                style: new TextStyle(fontSize: 13.0),
+              ),
             ),
           ),
           body: new Stack(
@@ -142,7 +131,7 @@ class _MusicPlayerExampleState extends State<MusicPlayerExample>
               ),
               new Padding(
                 padding: const EdgeInsets.only(bottom: 20.0),
-                child: new MusicPlayer(
+                child: new Player(
                   onError: (e) {
                     Scaffold.of(context).showSnackBar(
                       new SnackBar(
@@ -150,8 +139,8 @@ class _MusicPlayerExampleState extends State<MusicPlayerExample>
                       ),
                     );
                   },
-                  onSkipPrevious: () {},
-                  onSkipNext: () {},
+                  onPrevious: () {},
+                  onNext: () {},
                   onCompleted: () {},
                   onPlaying: (isPlaying) {
                     if (isPlaying) {
@@ -162,17 +151,9 @@ class _MusicPlayerExampleState extends State<MusicPlayerExample>
                       controller_needle.reverse();
                     }
                   },
-                  onLoopChanged: (loop) {
-                    setState(() => this.loopKind = loop);
-                  },
-                  onShuffleChanged: (loop) {
-                    setState(() => this.shuffle = loop);
-                  },
                   key: musicPlayerKey,
-                  textColor: Colors.white,
-                  loop: loopKind,
-                  shuffle: shuffle,
-                  url: mp3Url,
+                  color: Colors.white,
+                  audioUrl: mp3Url,
                 ),
               ),
             ],

@@ -1,106 +1,65 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:meta/meta.dart';
 
-/// The kind of looping a [MusicPlayer] is doing.
-enum MusicPlayerLoopKind {
-  /// Plays the entire album/playlist again once it finishes.
-  ///
-  /// [MusicPlayer] has no logic to handle this case.
-  loopAll,
+class Player extends StatefulWidget {
+  /// [AudioPlayer] 播放地址
+  final String audioUrl;
 
-  /// Repeats the current when it finishes.
-  ///
-  /// [MusicPlayer] has no logic to handle this case.
-  loopOne,
-}
-
-/// A Flutter widget that plays an audio file, as well as displaying
-/// a interactive HUD.
-///
-/// Supports seeking, shuffling, skipping, and more.
-class MusicPlayer extends StatefulWidget {
-  /// The URL of the audio file to play.
-  final String url;
-
-  /// Passed to [AudioPlayer].
-  final bool isLocal;
-
-  /// Toggles the `shuffle` state of the player.
-  ///
-  /// This is purely visual; shuffling logic should be handled by your app.
-  final bool shuffle;
-
-  /// The color to paint the icons, text, and slider with.
-  final Color textColor;
-
-  /// Whether the player is looping, and if so, which type of loop.
-  final MusicPlayerLoopKind loop;
-
-  /// The volume to play the file at.
+  /// 音量
   final double volume;
 
-  /// Called when an error occurs.
+  /// 错误回调
   final Function(String) onError;
 
-  /// Playback event handlers.
-  final Function() onCompleted, onSkipPrevious, onSkipNext;
+  ///播放完成
+  final Function() onCompleted;
 
-  /// Called when [loop] changes.
-  final Function(MusicPlayerLoopKind) onLoopChanged;
+  /// 上一首
+  final Function() onPrevious;
 
-  /// Called when [shuffle] changes.
-  final Function(bool) onShuffleChanged;
+  ///下一首
+  final Function() onNext;
 
   final Function(bool) onPlaying;
 
-  /// The minimum amount of time allowed to pass before pressing the `skip_previous` button will
-  /// restart the current song, rather than skipping back to a previous one.
-  ///
-  /// Default: `3 seconds`.
-  final Duration minRestartDuration;
-
   final Key key;
 
-  const MusicPlayer(
-      {@required this.onError,
+  final Color color;
+
+  /// 是否是本地资源
+  final bool isLocal;
+
+  const Player(
+      {@required this.audioUrl,
       @required this.onCompleted,
-      @required this.onSkipPrevious,
-      @required this.onSkipNext,
-      @required this.onLoopChanged,
-      @required this.onShuffleChanged,
-      @required this.url,
-      this.minRestartDuration: const Duration(seconds: 3),
-      this.textColor,
-      this.isLocal: false,
-      this.volume: 1.0,
+      @required this.onError,
+      @required this.onNext,
+      @required this.onPrevious,
       this.key,
-      this.shuffle: false,
-      this.loop,
-      this.onPlaying});
+      this.volume: 1.0,
+      this.onPlaying,
+      this.color: Colors.white,
+      this.isLocal: false});
 
   @override
   State<StatefulWidget> createState() {
-    return new MusicPlayerState();
+    return new PlayerState();
   }
 }
 
-class MusicPlayerState extends State<MusicPlayer> {
+class PlayerState extends State<Player> {
   AudioPlayer audioPlayer;
   bool isPlaying = false;
-  Duration duration, position;
-  double value;
+  Duration duration;
+  Duration position;
+  double sliderValue;
 
   @override
-  initState() {
+  void initState() {
     super.initState();
+    print("audioUrl:" + widget.audioUrl);
     audioPlayer = new AudioPlayer();
     audioPlayer
-      ..play(
-        widget.url,
-        isLocal: widget.isLocal,
-        volume: widget.volume,
-      )
       ..completionHandler = widget.onCompleted
       ..errorHandler = widget.onError
       ..durationHandler = ((duration) {
@@ -108,7 +67,7 @@ class MusicPlayerState extends State<MusicPlayer> {
           this.duration = duration;
 
           if (position != null) {
-            this.value = (position.inSeconds / duration.inSeconds);
+            this.sliderValue = (position.inSeconds / duration.inSeconds);
           }
         });
       })
@@ -117,68 +76,62 @@ class MusicPlayerState extends State<MusicPlayer> {
           this.position = position;
 
           if (duration != null) {
-            this.value = (position.inSeconds / duration.inSeconds);
+            this.sliderValue = (position.inSeconds / duration.inSeconds);
           }
         });
       });
   }
 
   @override
-  deactivate() {
+  void deactivate() {
     audioPlayer.stop();
     super.deactivate();
   }
 
-  String _durationToString(Duration d) {
-    var parts = <int>[];
-
-    // Add seconds
-    parts.add(d.inSeconds % 60);
-
-    // Add minutes
-    if (d.inMinutes >= 1)
-      parts.add(d.inMinutes % 60);
-    else
-      parts.add(0);
-
-    // Hours?
-    if (d.inHours >= 1) parts.add(d.inHours);
-
-    return parts.reversed
-        .map((p) {
-          if (p < 10) return '0$p';
-          return p.toString();
-        })
-        .join(':')
-        .toString();
+  @override
+  void dispose() {
+    audioPlayer.release();
+    super.dispose();
   }
 
-  Widget _time(BuildContext context) {
-    if (duration == null || position == null) {
-      return const Divider(
-        height: 16.0,
-        color: Colors.transparent,
-      );
-    }
+  String _formatDuration(Duration d) {
+    int minute = d.inMinutes;
+    int second = (d.inSeconds > 60) ? (d.inSeconds % 60) : d.inSeconds;
+    print(d.inMinutes.toString() + "======" + d.inSeconds.toString());
+    String format = ((minute < 10) ? "0$minute" : "$minute") +
+        ":" +
+        ((second < 10) ? "0$second" : "$second");
+    return format;
+  }
 
-    var style = new TextStyle(color: widget.textColor);
+  @override
+  Widget build(BuildContext context) {
+    return new Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: _controllers(context),
+    );
+  }
+
+  Widget _timer(BuildContext context) {
+    var style = new TextStyle(color: widget.color);
     return new Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       mainAxisSize: MainAxisSize.max,
       children: <Widget>[
         new Text(
-          _durationToString(position),
+          position == null ? "--:--" : _formatDuration(position),
           style: style,
         ),
         new Text(
-          _durationToString(duration),
+          duration == null ? "--:--" : _formatDuration(duration),
           style: style,
         ),
       ],
     );
   }
 
-  List<Widget> _hud(BuildContext context) {
+  List<Widget> _controllers(BuildContext context) {
     return [
       const Divider(color: Colors.transparent),
       const Divider(
@@ -194,26 +147,12 @@ class MusicPlayerState extends State<MusicPlayer> {
           children: <Widget>[
             new IconButton(
               onPressed: () {
-                widget.onShuffleChanged(!widget.shuffle);
-              },
-              icon: new Icon(
-                Icons.shuffle,
-                color: widget.shuffle
-                    ? Theme.of(context).primaryColor
-                    : widget.textColor,
-              ),
-            ),
-            new IconButton(
-              onPressed: () {
-                if (position == null || position < widget.minRestartDuration)
-                  widget.onSkipPrevious();
-                else
-                  audioPlayer.seek(new Duration(seconds: 0));
+                widget.onPrevious();
               },
               icon: new Icon(
                 Icons.skip_previous,
                 size: 32.0,
-                color: widget.textColor,
+                color: widget.color,
               ),
             ),
             new IconButton(
@@ -222,7 +161,7 @@ class MusicPlayerState extends State<MusicPlayer> {
                   audioPlayer.pause();
                 else {
                   audioPlayer.play(
-                    widget.url,
+                    widget.audioUrl,
                     isLocal: widget.isLocal,
                     volume: widget.volume,
                   );
@@ -236,36 +175,16 @@ class MusicPlayerState extends State<MusicPlayer> {
               icon: new Icon(
                 isPlaying ? Icons.pause : Icons.play_arrow,
                 size: 48.0,
-                color: widget.textColor,
+                color: widget.color,
               ),
             ),
             new IconButton(
-              onPressed: widget.onSkipNext,
+              onPressed: widget.onNext,
               icon: new Icon(
                 Icons.skip_next,
                 size: 32.0,
-                color: widget.textColor,
+                color: widget.color,
               ),
-            ),
-            new IconButton(
-              onPressed: () {
-                var loopKind;
-
-                if (widget.loop == MusicPlayerLoopKind.loopOne)
-                  loopKind = null;
-                else if (widget.loop == null)
-                  loopKind = MusicPlayerLoopKind.loopAll;
-                else if (widget.loop == MusicPlayerLoopKind.loopAll)
-                  loopKind = MusicPlayerLoopKind.loopOne;
-                widget.onLoopChanged(loopKind);
-              },
-              icon: new Icon(
-                  widget.loop == MusicPlayerLoopKind.loopOne
-                      ? Icons.repeat_one
-                      : Icons.repeat,
-                  color: widget.loop == null
-                      ? widget.textColor
-                      : Theme.of(context).primaryColor),
             ),
           ],
         ),
@@ -278,25 +197,16 @@ class MusicPlayerState extends State<MusicPlayer> {
             audioPlayer.seek(new Duration(seconds: seconds));
           }
         },
-        value: value ?? 0.0,
-        activeColor: widget.textColor,
+        value: sliderValue ?? 0.0,
+        activeColor: widget.color,
       ),
       new Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 16.0,
           vertical: 8.0,
         ),
-        child: _time(context),
+        child: _timer(context),
       ),
     ];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return new Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: _hud(context),
-    );
   }
 }
