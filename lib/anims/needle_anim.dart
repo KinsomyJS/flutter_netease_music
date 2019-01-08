@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 class PivotTransition extends AnimatedWidget {
-  /// Creates a rotation transition.
-  ///
-  /// The [turns] argument must not be null.
+  /// 创建旋转变换
+  /// turns不能为空.
   PivotTransition({
     Key key,
     this.alignment: FractionalOffset.topCenter,
@@ -14,7 +13,6 @@ class PivotTransition extends AnimatedWidget {
   }) : super(key: key, listenable: turns);
 
   /// The animation that controls the rotation of the child.
-  ///
   /// If the current value of the turns animation is v, the child will be
   /// rotated v * 2 * pi radians before being painted.
   Animation<double> get turns => listenable;

@@ -81,8 +81,7 @@ class _MusicPlayerExampleState extends State<MusicPlayerExample>
           ),
         ),
         new Container(
-            child: new ClipRect(
-                child: new BackdropFilter(
+            child: new BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           child: Opacity(
             opacity: 0.6,
@@ -92,7 +91,7 @@ class _MusicPlayerExampleState extends State<MusicPlayerExample>
               ),
             ),
           ),
-        ))),
+        )),
         new Scaffold(
           backgroundColor: Colors.transparent,
           appBar: new AppBar(
