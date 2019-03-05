@@ -1,5 +1,8 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_netease_music/model/lyric.dart';
+import 'package:flutter_netease_music/utils.dart';
+import 'package:flutter_netease_music/widget/lyric_panel.dart';
 
 class Player extends StatefulWidget {
   /// [AudioPlayer] 播放地址
@@ -53,11 +56,22 @@ class PlayerState extends State<Player> {
   Duration duration;
   Duration position;
   double sliderValue;
+  Lyric lyric;
+  LyricPanel panel;
+  PositionChangeHandler handler;
 
   @override
   void initState() {
     super.initState();
     print("audioUrl:" + widget.audioUrl);
+    Utils.getLyricFromTxt().then((Lyric lyric) {
+      print("getLyricFromTxt:" + lyric.slices.length.toString());
+      setState(() {
+        this.lyric = lyric;
+        panel = new LyricPanel(this.lyric);
+      });
+    });
+
     audioPlayer = new AudioPlayer();
     audioPlayer
       ..completionHandler = widget.onCompleted
@@ -74,6 +88,10 @@ class PlayerState extends State<Player> {
       ..positionHandler = ((position) {
         setState(() {
           this.position = position;
+
+          if (panel != null) {
+            panel.handler(position.inSeconds);
+          }
 
           if (duration != null) {
             this.sliderValue = (position.inSeconds / duration.inSeconds);
@@ -132,7 +150,10 @@ class PlayerState extends State<Player> {
   }
 
   List<Widget> _controllers(BuildContext context) {
+    print("_controllers");
+
     return [
+      lyric != null ? panel : null,
       const Divider(color: Colors.transparent),
       const Divider(
         color: Colors.transparent,

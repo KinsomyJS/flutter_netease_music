@@ -40,6 +40,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - images/play_needle.png
+    - images/lyric.txt
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.io/assets-and-images/#resolution-aware.
